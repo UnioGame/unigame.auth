@@ -1,0 +1,30 @@
+{
+  "name": "com.unigame.gameauth",
+  "author": "UniGame",
+  "displayName": "UniGame Game Authorization",
+  "description": "UniGame Game Authorization Module. Provides multiple authorization services for games including social and anonymous login.",
+  "unity": "2023.1",
+  "version": "2025.0.0",
+  "keywords": [
+    "UniGame",
+    "Auth",
+    "Tools",
+    "Facebook",
+    "PlayServices",
+    "Email",
+    "Firebase"
+  ],
+  "homepage": "https://github.com/UnioGame/game.features#readme",
+  "dependencies": {
+    "com.unity.addressables": "2.6.0",
+    "com.unity.editorcoroutines": "1.0.0",
+    "com.unity.localization": "1.4.5",
+    "com.unity.burst": "1.8.9",
+    "com.unity.ugui": "1.0.0",
+    "com.unity.2d.psdimporter": "8.0.3",
+    "com.unity.nuget.newtonsoft-json": "3.2.1",
+    "com.unigame.addressablestools" : "https://github.com/UnioGame/unigame.addressables.git",
+    "com.unigame.unicore": "https://github.com/UnioGame/unigame.core.git",
+    "com.cysharp.unitask" : "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask"
+  }
+}
