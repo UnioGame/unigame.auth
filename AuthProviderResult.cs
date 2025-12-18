@@ -5,6 +5,13 @@ namespace UniGame.Runtime.GameAuth
     [Serializable]
     public class AuthProviderResult
     {
+        public static readonly AuthProviderResult Failed = new()
+        {
+            success = false,
+            error = "request failed",
+            data = null,
+        };
+        
         public bool success = false;
         public string error = string.Empty;
         public GameAuthData data = new();

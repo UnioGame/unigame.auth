@@ -1,6 +1,6 @@
 namespace UniGame.Runtime.GameAuth
 {
-    public interface ILoginContext
+    public interface IAuthContext
     {
         
     }

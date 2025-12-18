@@ -3,6 +3,7 @@ namespace UniGame.Runtime.GameAuth.DeviceIdGuest
     using System;
     using System.Threading;
     using Cysharp.Threading.Tasks;
+    using FacebookAuth;
     using Firebase.Auth;
     using UniCore.Runtime.ProfilerTools;
 
@@ -10,10 +11,6 @@ namespace UniGame.Runtime.GameAuth.DeviceIdGuest
     public class FirebaseAnonymousAuthProvider : IGameAuthProvider
     {
         private bool _isLoggedIn;
-
-        public FirebaseAnonymousAuthProvider()
-        {
-        }
  
         public bool IsAuthenticated => _isLoggedIn;
         
@@ -21,18 +18,41 @@ namespace UniGame.Runtime.GameAuth.DeviceIdGuest
         
         public bool AllowRegisterAccount => false;
 
+        public async UniTask<AuthProviderResult> RestoreAsync(IAuthContext authContext, CancellationToken cancellationToken = default)
+        {
+            var auth = FirebaseAuth.DefaultInstance;
+            var user = auth.CurrentUser;
+
+            return new AuthProviderResult()
+            {
+                success = user != null && user.IsAnonymous == false,
+                error = string.Empty,
+                data = new GameAuthData()
+                {
+                    userId = user?.UserId,
+                    email = user?.Email,
+                    displayName = user?.DisplayName,
+                }
+            };
+        }
+
         public UniTask<SignOutResult> SignOutAsync()
         {
             FirebaseAuth.DefaultInstance.SignOut();
             return UniTask.FromResult(new SignOutResult(){success = true, error = string.Empty});
         }
         
-        public async UniTask<AuthProviderResult> RegisterAsync(ILoginContext context)
+        public async UniTask<AuthProviderResult> RegisterAsync(IAuthContext context)
         {
             return await LoginAsync(context);
         }
-        
-        public async UniTask<AuthProviderResult> LoginAsync(ILoginContext context,CancellationToken cancellationToken = default)
+
+        public bool IsAuthSupported(IAuthContext context)
+        {
+            return context is FirebaseAnonymousAuthContext;
+        }
+
+        public async UniTask<AuthProviderResult> LoginAsync(IAuthContext context,CancellationToken cancellationToken = default)
         {
             var result = new AuthProviderResult()
             {

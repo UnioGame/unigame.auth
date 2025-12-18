@@ -19,8 +19,12 @@ namespace UniGame.Runtime.GameAuth
         /// is restoring account supported by this provider
         /// </summary>
         bool AllowRestoreAccount { get; }
+        
+        bool IsAuthSupported(IAuthContext context);
 
-        UniTask<AuthProviderResult> LoginAsync(ILoginContext context,CancellationToken cancellationToken = default);
+        UniTask<AuthProviderResult> LoginAsync(IAuthContext context,CancellationToken cancellationToken = default);
+        
+        UniTask<AuthProviderResult> RestoreAsync(IAuthContext context,CancellationToken cancellationToken = default);
         
         UniTask<SignOutResult> SignOutAsync();
     }

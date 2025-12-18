@@ -2,7 +2,9 @@ namespace UniGame.Runtime.GameAuth.PlayGames
 {
     using System;
     using System.Threading;
+    using System.Threading.Tasks;
     using Cysharp.Threading.Tasks;
+    using FirebaseEmail;
     using UniCore.Runtime.ProfilerTools;
     using UnityEngine;
 
@@ -26,7 +28,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
         
         public string Id => _id;
         
-        public bool AllowRestoreAccount => false;
+        public bool AllowRestoreAccount => true;
 
         public bool IsAuthenticated
         {
@@ -41,12 +43,17 @@ namespace UniGame.Runtime.GameAuth.PlayGames
         
         public bool AllowRegisterAccount => false;
 
+        public async UniTask<AuthProviderResult> RestoreAsync(IAuthContext context,CancellationToken cancellationToken = default)
+        {
+            return await LoginAsync(context, cancellationToken);
+        }
+
         public UniTask<SignOutResult> SignOutAsync()
         {
             return UniTask.FromResult(new SignOutResult(){success = true, error = string.Empty});
         }
         
-        public UniTask<AuthProviderResult> RegisterAsync(ILoginContext context)
+        public UniTask<AuthProviderResult> RegisterAsync(IAuthContext context)
         {
             return new UniTask<AuthProviderResult>(new AuthProviderResult()
             {
@@ -56,7 +63,12 @@ namespace UniGame.Runtime.GameAuth.PlayGames
             });
         }
 
-        public async UniTask<AuthProviderResult> LoginAsync(ILoginContext context,CancellationToken cancellationToken = default)
+        public bool IsAuthSupported(IAuthContext context)
+        {
+            return context is UnityPlayGamesAuthContext;
+        }
+
+        public async UniTask<AuthProviderResult> LoginAsync(IAuthContext context,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -91,7 +103,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
 #if UNITY_ANDROID && PLAY_GAMES_ENABLED
             //Настройка Play Games
             PlayGamesPlatform.Activate();
-            PlayGamesPlatform.Instance.Authenticate(x =>
+            PlayGamesPlatform.Instance.Authenticate(async x =>
             {
                 Debug.Log($"PlayGamesPlatform Status : {x}");
                 
@@ -107,9 +119,21 @@ namespace UniGame.Runtime.GameAuth.PlayGames
                     return;
                 }
 
-                PlayGamesPlatform.Instance.GetUserId();
+                var token = string.Empty;
+                var tokenCompleted = false;
+                
+                PlayGamesPlatform.Instance.RequestServerSideAccess(true, code =>
+                {
+                    Debug.Log("Authorization code: " + code);
+                    token = code; // This token serves as an example to be used for SignInWithGooglePlayGames
+                    tokenCompleted = true;
+                });
+
+                await UniTask.WaitWhile(() => tokenCompleted == false)
+                    .Timeout(TimeSpan.FromSeconds(LoginTimeoutSeconds));
+                
                 var user = PlayGamesPlatform.Instance.localUser;
-                var id = user?.id;
+                var id = PlayGamesPlatform.Instance.GetUserId();
                 var success = user is { authenticated: true };
                 
                 Debug.Log($"PlayGamesPlatform : {user?.userName} |  Auth: {success} | ID : {id}");
@@ -123,7 +147,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
                         displayName = PlayGamesPlatform.Instance.GetUserDisplayName(),
                         photoUrl = PlayGamesPlatform.Instance.GetUserImageUrl(),
                         email = string.Empty,
-                        token = id,
+                        token = token,
                     },
                     error = x.ToString(),
                 };
@@ -150,7 +174,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
             {
                 success = false,
                 error = "Platform not supported",
-            };;
+            };
         }
         
     }

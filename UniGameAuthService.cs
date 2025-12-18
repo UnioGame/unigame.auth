@@ -12,7 +12,7 @@ namespace UniGame.Runtime.GameAuth
     using UnityEngine;
 
     [Serializable]
-    public class GameAuthService : GameService, IGameAuthService
+    public class UniGameAuthService : GameService, IUniGameAuthService
     {
         public const string GameAuthKey = nameof(GameAuthKey);
         
@@ -23,7 +23,7 @@ namespace UniGame.Runtime.GameAuth
         private Dictionary<string, GameLoginData> _loginData = new();
         private Dictionary<string, IGameAuthProvider> _providers = new();
 
-        public GameAuthService(GameAuthConfiguration configuration)
+        public UniGameAuthService(GameAuthConfiguration configuration)
         {
             _configuration = configuration;
             _authStatus.Value = new GameAuthResult()
@@ -53,23 +53,35 @@ namespace UniGame.Runtime.GameAuth
             }
 
             if (_configuration.userLoginCache)
-                RestoreAuth();
+            {
+                RestoreAuthAsync().Forget();
+            }
         }
 
         public Observable<GameAuthResult> AuthAction => _authAction;
         
         public ReadOnlyReactiveProperty<GameAuthResult> AuthStatus => _authStatus;
 
-        public void RestoreAuth()
+        public async UniTask<GameAuthResult> RestoreAuthAsync(CancellationToken ct = default)
         {
-            if (!PlayerPrefs.HasKey(GameAuthKey)) return;
-            var json = PlayerPrefs.GetString(GameAuthKey);
-            if (string.IsNullOrEmpty(json)) return;
+            var status = LoadAuthData();
+            if(status == null || string.IsNullOrEmpty(status.id)) return status;
             
-            var value = JsonConvert.DeserializeObject<GameAuthData>(json);
-            if (value == null) return;
+            var provider = GetProvider(status.id);
+            var result = await provider.RestoreAsync(new EmptyAuthContext(),ct);
 
-            _authData.Value = value;
+            var authResult = new GameAuthResult()
+            {
+                data = result.data,
+                success = result.success,
+                error = result.error,
+                id = status.id,
+            };
+            
+            SaveAuthData(authResult);
+
+            _authStatus.Value = authResult;
+            return authResult;
         }
 
         public void Reset()
@@ -108,9 +120,9 @@ namespace UniGame.Runtime.GameAuth
             return result;
         }
 
-        public async UniTask<GameAuthResult> LoginAsync(string id, ILoginContext loginContext)
+        public async UniTask<GameAuthResult> SignInAsync(string id, IAuthContext loginContext,CancellationToken ct = default)
         {
-            var result = await LoginInternalAsync(id, loginContext);
+            var result = await LoginInternalAsync(id, loginContext, ct);
             
             if (result.success == false)
             {
@@ -125,7 +137,7 @@ namespace UniGame.Runtime.GameAuth
             return result;
         }
 
-        public async UniTask<ResetCredentialResult> ResetCredentialAsync(string id, ILoginContext loginContext)
+        public async UniTask<ResetCredentialResult> ResetCredentialAsync(string id, IAuthContext loginContext)
         {
             var provider = GetProvider(id);
             if (provider is not IGameAuthReset resetProvider)
@@ -153,7 +165,7 @@ namespace UniGame.Runtime.GameAuth
             }
         }
 
-        public async UniTask<GameRegisterResult> RegisterAsync(string id, ILoginContext loginContext)
+        public async UniTask<GameRegisterResult> RegisterAsync(string id, IAuthContext loginContext,CancellationToken ct = default)
         {
             var provider = GetProvider(id);
             if (provider is not IGameAuthRegister gameAuthRegister)
@@ -177,7 +189,7 @@ namespace UniGame.Runtime.GameAuth
             
             try
             {
-                var result = await gameAuthRegister.RegisterAsync(loginContext);
+                var result = await gameAuthRegister.RegisterAsync(loginContext,ct);
                 registerResult.success = result.success;
                 registerResult.id = id;
                 registerResult.error = result.error;
@@ -207,9 +219,30 @@ namespace UniGame.Runtime.GameAuth
 
         }
         
-        private async UniTask<GameAuthResult> LoginInternalAsync(string id
-            , ILoginContext loginContext
-            ,CancellationToken cancellationToken = default)
+        
+        public IGameAuthProvider GetProvider(string id)
+        {
+            return _providers.GetValueOrDefault(id);
+        }
+
+        public GameLoginData GetAuthProviderData(string id)
+        {
+            return _loginData.GetValueOrDefault(id);
+        }
+
+        public IEnumerable<GameLoginData> GetAvailableAuth()
+        {
+            foreach (var data in _loginData)
+            {
+                var value = data.Value;
+                if(!value.enabled) continue;
+                yield return value;
+            }
+        }
+        
+        private async UniTask<GameAuthResult> LoginInternalAsync(string id, 
+            IAuthContext loginContext, 
+            CancellationToken cancellationToken = default)
         {
             var activeStatus = _authStatus.Value;
             
@@ -261,19 +294,25 @@ namespace UniGame.Runtime.GameAuth
             return result;
         }
 
-        public IGameAuthProvider GetProvider(string id)
+        
+        private GameAuthResult LoadAuthData()
         {
-            return _providers.GetValueOrDefault(id);
+            if (!PlayerPrefs.HasKey(GameAuthKey)) 
+                return null;
+            
+            var json = PlayerPrefs.GetString(GameAuthKey);
+            if (string.IsNullOrEmpty(json)) 
+                return null;
+            
+            var status = JsonConvert.DeserializeObject<GameAuthResult>(json);
+            return status;
         }
-
-        public GameLoginData GetAuthProviderData(string id)
+        
+        private void SaveAuthData(GameAuthResult data)
         {
-            return _loginData.GetValueOrDefault(id);
-        }
-
-        public IEnumerable<GameLoginData> GetProvidersData()
-        {
-            return _loginData.Values;
+            var json = JsonConvert.SerializeObject(data);
+            PlayerPrefs.SetString(GameAuthKey, json);
         }
     }
+
 }

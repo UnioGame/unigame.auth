@@ -5,7 +5,7 @@ namespace UniGame.Runtime.GameAuth.FirebaseEmail
     using Cysharp.Threading.Tasks;
     using Firebase.Auth;
     using R3;
-    using UniGame.Runtime.Rx;
+    using Rx;
     using UnityEngine;
 
     [Serializable]
@@ -30,7 +30,7 @@ namespace UniGame.Runtime.GameAuth.FirebaseEmail
         
         public bool AllowRegisterAccount => true;
 
-        public async UniTask<AuthProviderResult> RegisterAsync(ILoginContext context)
+        public async UniTask<AuthProviderResult> RegisterAsync(IAuthContext context)
         {
             var result = new AuthProviderResult()
             {
@@ -45,7 +45,12 @@ namespace UniGame.Runtime.GameAuth.FirebaseEmail
             return registered;
         }
 
-        public async UniTask<AuthProviderResult> LoginAsync(ILoginContext context,CancellationToken cancellationToken = default)
+        public bool IsAuthSupported(IAuthContext context)
+        {
+            return context is EmailAuthContext;
+        }
+
+        public async UniTask<AuthProviderResult> LoginAsync(IAuthContext context,CancellationToken cancellationToken = default)
         {
             var result = new AuthProviderResult()
             {
@@ -56,7 +61,7 @@ namespace UniGame.Runtime.GameAuth.FirebaseEmail
 
             var emailContext = context as EmailAuthContext;
             if (emailContext == null) return result;
-            
+
             var app = FirebaseAuth.DefaultInstance;
             var task = app.SignInWithEmailAndPasswordAsync(emailContext.Email, emailContext.Password)
                 .AsUniTask()
@@ -93,6 +98,25 @@ namespace UniGame.Runtime.GameAuth.FirebaseEmail
                 },
                 error = string.Empty,
                 success = user.IsAnonymous == false,
+            };
+        }
+
+        public async UniTask<AuthProviderResult> RestoreAsync(IAuthContext context, 
+            CancellationToken cancellationToken = default)
+        {
+            var auth = FirebaseAuth.DefaultInstance;
+            var user = auth.CurrentUser;
+
+            return new AuthProviderResult()
+            {
+                success = user != null && user.IsAnonymous == false,
+                error = string.Empty,
+                data = new GameAuthData()
+                {
+                    userId = user?.UserId,
+                    email = user?.Email,
+                    displayName = user?.DisplayName,
+                }
             };
         }
 
@@ -156,7 +180,7 @@ namespace UniGame.Runtime.GameAuth.FirebaseEmail
             };
         }
 
-        public async UniTask<ResetCredentialResult> ResetAuthAsync(ILoginContext context)
+        public async UniTask<ResetCredentialResult> ResetAuthAsync(IAuthContext context)
         {
             
             if (context is not EmailAuthContext emailContext)
@@ -211,12 +235,10 @@ namespace UniGame.Runtime.GameAuth.FirebaseEmail
             }
             return verificationTask.Status == UniTaskStatus.Succeeded;
         }
-    }
 
-    [Serializable]
-    public class EmailAuthContext : ILoginContext
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public UniTask<AuthProviderResult> RegisterAsync(IAuthContext context, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

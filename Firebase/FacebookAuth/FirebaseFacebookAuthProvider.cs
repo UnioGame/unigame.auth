@@ -36,9 +36,14 @@ namespace UniGame.Runtime.GameAuth.FacebookAuth
         public bool AllowRegisterAccount => false;
 
         public bool AllowRestoreAccount => false;
-        
 
-        public async UniTask<AuthProviderResult> LoginAsync(ILoginContext context,CancellationToken cancellationToken = default)
+
+        public bool IsAuthSupported(IAuthContext context)
+        {
+            return context is FirebaseFacebookAuthContext;
+        }
+
+        public async UniTask<AuthProviderResult> LoginAsync(IAuthContext context,CancellationToken cancellationToken = default)
         {
             var loginResult = new AuthProviderResult
             {
@@ -95,6 +100,24 @@ namespace UniGame.Runtime.GameAuth.FacebookAuth
         {
             _loginResult = result;
             _waitForLogin = false;
+        }
+        
+        public async UniTask<AuthProviderResult> RestoreAsync(IAuthContext context, CancellationToken cancellationToken = default)
+        {
+            var auth = FirebaseAuth.DefaultInstance;
+            var user = auth.CurrentUser;
+
+            return new AuthProviderResult()
+            {
+                success = user != null && user.IsAnonymous == false,
+                error = string.Empty,
+                data = new GameAuthData()
+                {
+                    userId = user?.UserId,
+                    email = user?.Email,
+                    displayName = user?.DisplayName,
+                }
+            };
         }
 
         private async UniTask<AuthProviderResult> SignInToFirebaseAsync(string accessToken,CancellationToken token = default)

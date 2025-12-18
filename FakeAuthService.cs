@@ -2,6 +2,7 @@ namespace UniGame.Runtime.GameAuth
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading;
     using Cysharp.Threading.Tasks;
     using R3;
     using Rx;
@@ -9,7 +10,7 @@ namespace UniGame.Runtime.GameAuth
     using UnityEngine.Localization;
 
     [Serializable]
-    public class FakeAuthService : GameService,IGameAuthService
+    public class FakeAuthService : GameService,IUniGameAuthService
     {
         private string _userId;
         private GameAuthResult _authResult;
@@ -58,7 +59,7 @@ namespace UniGame.Runtime.GameAuth
             return _loginData;
         }
 
-        public IEnumerable<GameLoginData> GetProvidersData()
+        public IEnumerable<GameLoginData> GetAvailableAuth()
         {
             yield break;
         }
@@ -72,12 +73,25 @@ namespace UniGame.Runtime.GameAuth
             };
         }
 
-        public async UniTask<GameAuthResult> LoginAsync(string id, ILoginContext loginContext)
+        public async UniTask<GameAuthResult> RestoreAuthAsync(CancellationToken ct = default)
+        {
+            return new GameAuthResult()
+            {
+                data = null,
+                error = "Not authenticated",
+                success = false,
+                id = nameof(FakeAuthService),
+            };
+        }
+
+        public async UniTask<GameAuthResult> SignInAsync(string id, 
+            IAuthContext loginContext,
+            CancellationToken cancellationToken = default)
         {
             return _authResult;
         }
 
-        public async UniTask<ResetCredentialResult> ResetCredentialAsync(string id, ILoginContext loginContext)
+        public async UniTask<ResetCredentialResult> ResetCredentialAsync(string id, IAuthContext loginContext)
         {
             return new ResetCredentialResult()
             {
@@ -86,7 +100,10 @@ namespace UniGame.Runtime.GameAuth
             };
         }
 
-        public async UniTask<GameRegisterResult> RegisterAsync(string id, ILoginContext loginContext)
+        public async UniTask<GameRegisterResult> RegisterAsync(
+            string id, 
+            IAuthContext loginContext,
+            CancellationToken cancellationToken = default)
         {
             return new GameRegisterResult()
             {

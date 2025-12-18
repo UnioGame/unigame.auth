@@ -4,7 +4,7 @@ namespace UniGame.Runtime.GameAuth
 
     public interface IGameAuthReset
     {
-        UniTask<ResetCredentialResult> ResetAuthAsync(ILoginContext context);
+        UniTask<ResetCredentialResult> ResetAuthAsync(IAuthContext context);
     }
     
     public struct ResetCredentialResult
