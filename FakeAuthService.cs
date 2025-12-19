@@ -84,6 +84,11 @@ namespace UniGame.Runtime.GameAuth
             };
         }
 
+        public async UniTask<GameAuthResult> SignInAsync(IAuthContext loginContext, CancellationToken ct = default)
+        {
+            return _authResult;
+        }
+
         public async UniTask<GameAuthResult> SignInAsync(string id, 
             IAuthContext loginContext,
             CancellationToken cancellationToken = default)

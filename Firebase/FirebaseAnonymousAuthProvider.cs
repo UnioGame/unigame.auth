@@ -47,7 +47,7 @@ namespace UniGame.Runtime.GameAuth.DeviceIdGuest
             return await LoginAsync(context);
         }
 
-        public bool IsAuthSupported(IAuthContext context)
+        public bool CheckAuthContext(IAuthContext context)
         {
             return context is FirebaseAnonymousAuthContext;
         }

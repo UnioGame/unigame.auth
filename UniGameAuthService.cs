@@ -120,6 +120,18 @@ namespace UniGame.Runtime.GameAuth
             return result;
         }
 
+        public async UniTask<GameAuthResult> SignInAsync(IAuthContext loginContext, CancellationToken ct = default)
+        {
+            foreach (var authProvider in _providers)
+            {
+                var value = authProvider.Value;
+                if(!value.CheckAuthContext(loginContext)) continue;
+                return await SignInAsync(authProvider.Key, loginContext, ct);
+            }
+
+            return GameAuthResult.Failed;
+        }
+
         public async UniTask<GameAuthResult> SignInAsync(string id, IAuthContext loginContext,CancellationToken ct = default)
         {
             var result = await LoginInternalAsync(id, loginContext, ct);
@@ -244,21 +256,6 @@ namespace UniGame.Runtime.GameAuth
             IAuthContext loginContext, 
             CancellationToken cancellationToken = default)
         {
-            var activeStatus = _authStatus.Value;
-            
-            //already logged in
-            if (activeStatus.success)
-            {
-                if (id.Equals(activeStatus.id)) return activeStatus;
-                return new GameAuthResult()
-                {
-                    success = false,
-                    id = id,
-                    error = "Already logged in",
-                    data = activeStatus.data,
-                };
-            }
-            
             var provider = GetProvider(id);
             var result = new GameAuthResult();
             result.id = id;

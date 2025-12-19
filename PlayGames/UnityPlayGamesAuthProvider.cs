@@ -24,10 +24,13 @@ namespace UniGame.Runtime.GameAuth.PlayGames
         public UnityPlayGamesAuthProvider(string id)
         {
             _id = id;
+            
+#if UNITY_ANDROID && PLAY_GAMES_ENABLED
+            //Настройка Play Games
+            PlayGamesPlatform.Activate();
+#endif
         }
-        
-        public string Id => _id;
-        
+
         public bool AllowRestoreAccount => true;
 
         public bool IsAuthenticated
@@ -63,7 +66,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
             });
         }
 
-        public bool IsAuthSupported(IAuthContext context)
+        public bool CheckAuthContext(IAuthContext context)
         {
             return context is UnityPlayGamesAuthContext;
         }
@@ -102,7 +105,6 @@ namespace UniGame.Runtime.GameAuth.PlayGames
             
 #if UNITY_ANDROID && PLAY_GAMES_ENABLED
             //Настройка Play Games
-            PlayGamesPlatform.Activate();
             PlayGamesPlatform.Instance.Authenticate(async x =>
             {
                 Debug.Log($"PlayGamesPlatform Status : {x}");

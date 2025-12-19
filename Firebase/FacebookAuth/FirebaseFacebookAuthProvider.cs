@@ -38,7 +38,7 @@ namespace UniGame.Runtime.GameAuth.FacebookAuth
         public bool AllowRestoreAccount => false;
 
 
-        public bool IsAuthSupported(IAuthContext context)
+        public bool CheckAuthContext(IAuthContext context)
         {
             return context is FirebaseFacebookAuthContext;
         }

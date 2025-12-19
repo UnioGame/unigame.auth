@@ -45,7 +45,7 @@ namespace UniGame.Runtime.GameAuth.FirebaseEmail
             return registered;
         }
 
-        public bool IsAuthSupported(IAuthContext context)
+        public bool CheckAuthContext(IAuthContext context)
         {
             return context is EmailAuthContext;
         }

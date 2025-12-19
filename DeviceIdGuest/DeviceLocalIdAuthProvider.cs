@@ -28,9 +28,9 @@ namespace UniGame.Runtime.GameAuth.DeviceIdGuest
             return await LoginAsync(context);
         }
 
-        public bool IsAuthSupported(IAuthContext context)
+        public bool CheckAuthContext(IAuthContext context)
         {
-            return true;
+            return context is LocalDeviceIdContext;
         }
 
         public async UniTask<AuthProviderResult> LoginAsync(IAuthContext context,CancellationToken cancellationToken = default)
@@ -64,5 +64,10 @@ namespace UniGame.Runtime.GameAuth.DeviceIdGuest
         {
             return UniTask.FromResult(new SignOutResult(){success = true, error = string.Empty});
         }
+    }
+    
+    [Serializable]
+    public class LocalDeviceIdContext : IAuthContext
+    {
     }
 }
