@@ -64,9 +64,9 @@ namespace UniGame.Runtime.GameAuth
             yield break;
         }
 
-        public async UniTask<SignOutResult> SignOutAsync()
+        public async UniTask<AuthSignOutResult> SignOutAsync()
         {
-            return new SignOutResult()
+            return new AuthSignOutResult()
             {
                 error = string.Empty,
                 success = true,

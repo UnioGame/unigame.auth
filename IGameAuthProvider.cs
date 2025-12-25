@@ -6,11 +6,6 @@ namespace UniGame.Runtime.GameAuth
     public interface IGameAuthProvider 
     {
         /// <summary>
-        /// is user authenticated
-        /// </summary>
-        bool IsAuthenticated { get; }
-        
-        /// <summary>
         /// is registration supported by this provider
         /// </summary>
         bool AllowRegisterAccount { get; }
@@ -26,6 +21,6 @@ namespace UniGame.Runtime.GameAuth
         
         UniTask<AuthProviderResult> RestoreAsync(IAuthContext context,CancellationToken cancellationToken = default);
         
-        UniTask<SignOutResult> SignOutAsync();
+        UniTask<AuthSignOutResult> SignOutAsync();
     }
 }

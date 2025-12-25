@@ -12,14 +12,14 @@
         private bool _isAuthenticated;
         
         private UnityPlayGamesAuthProvider _playGamesAuthProvider;
-        private NakamaGoogleAuthContract _nakamaGoogleAuthContract;
+        private NakamaPlayServicesAuthContract _nakamaGoogleAuthContract;
         private NakamaLogoutContract _nakamaLogoutContract;
         private NakamaRestoreSessionContract _nakamaRestoreSessionContract;
 
         public NakamaPlayServicesAuthProvider(string id)
         {
-            _playGamesAuthProvider = new UnityPlayGamesAuthProvider(id);
-            _nakamaGoogleAuthContract = new NakamaGoogleAuthContract();
+            _playGamesAuthProvider = new UnityPlayGamesAuthProvider();
+            _nakamaGoogleAuthContract = new NakamaPlayServicesAuthContract();
             _nakamaLogoutContract = new NakamaLogoutContract();
             _nakamaRestoreSessionContract = new NakamaRestoreSessionContract();
         }
@@ -69,10 +69,10 @@
             return ToProviderResult(restoreResult.data);
         }
 
-        public async UniTask<SignOutResult> SignOutAsync()
+        public async UniTask<AuthSignOutResult> SignOutAsync()
         {
             var result = await _nakamaLogoutContract.ExecuteAsync();
-            return new SignOutResult()
+            return new AuthSignOutResult()
             {
                 success = result.success,
             };

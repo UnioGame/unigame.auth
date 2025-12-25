@@ -4,7 +4,7 @@
   "displayName": "UniGame Game Authorization",
   "description": "UniGame Game Authorization Module. Provides multiple authorization services for games including social and anonymous login.",
   "unity": "2023.1",
-  "version": "2025.0.0",
+  "version": "2025.0.1",
   "keywords": [
     "UniGame",
     "Auth",

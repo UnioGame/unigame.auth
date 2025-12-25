@@ -7,7 +7,7 @@ namespace UniGame.Runtime.GameAuth
     using Newtonsoft.Json;
     using R3;
     using UniCore.Runtime.ProfilerTools;
-    using UniGame.Runtime.Rx;
+    using Rx;
     using UniGame.GameFlow.Runtime;
     using UnityEngine;
 
@@ -33,24 +33,6 @@ namespace UniGame.Runtime.GameAuth
                 id = string.Empty,
                 data = null,
             };
-            
-            if (_configuration.debugMode)
-            {
-                var userId = _configuration.overrideUserId
-                    ? _configuration.targetUserId
-                    : SystemInfo.deviceUniqueIdentifier;
-
-                _authStatus.Value = new GameAuthResult()
-                {
-                    success = true,
-                    error = string.Empty,
-                    data = new GameAuthData()
-                    {
-                        displayName = userId,
-                        userId = userId,
-                    }
-                };
-            }
 
             if (_configuration.userLoginCache)
             {
@@ -102,12 +84,12 @@ namespace UniGame.Runtime.GameAuth
             _providers[id] = provider;
         }
 
-        public async UniTask<SignOutResult> SignOutAsync()
+        public async UniTask<AuthSignOutResult> SignOutAsync()
         {
             var activeStatus = _authStatus.Value;
             if (!activeStatus.success)
             {
-                return new SignOutResult() { success = true, error = string.Empty };;
+                return new AuthSignOutResult() { success = true, error = string.Empty };;
             }
             
             var provider = GetProvider(activeStatus.id);

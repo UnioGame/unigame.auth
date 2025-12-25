@@ -52,10 +52,10 @@
             return ToProviderResult(response.data);
         }
 
-        public async UniTask<SignOutResult> SignOutAsync()
+        public async UniTask<AuthSignOutResult> SignOutAsync()
         {
             var result = await _nakamaLogoutContract.ExecuteAsync();
-            return new SignOutResult()
+            return new AuthSignOutResult()
             {
                 success = result.success,
             };

@@ -19,7 +19,7 @@ namespace UniGame.Runtime.GameAuth
         
         IEnumerable<GameLoginData> GetAvailableAuth();
 
-        UniTask<SignOutResult> SignOutAsync();
+        UniTask<AuthSignOutResult> SignOutAsync();
 
         UniTask<GameAuthResult> RestoreAuthAsync(CancellationToken ct = default);
         

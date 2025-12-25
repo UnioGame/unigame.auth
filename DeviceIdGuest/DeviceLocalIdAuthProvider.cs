@@ -60,9 +60,9 @@ namespace UniGame.Runtime.GameAuth.DeviceIdGuest
             };
         }
 
-        public UniTask<SignOutResult> SignOutAsync()
+        public UniTask<AuthSignOutResult> SignOutAsync()
         {
-            return UniTask.FromResult(new SignOutResult(){success = true, error = string.Empty});
+            return UniTask.FromResult(new AuthSignOutResult(){success = true, error = string.Empty});
         }
     }
     

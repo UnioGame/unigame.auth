@@ -1,16 +1,15 @@
-namespace UniGame.Runtime.GameAuth.FirebaseEmail
+﻿namespace UniGame.Runtime.GameAuth.FacebookAuth
 {
     using System;
     using Core.Runtime;
     using Cysharp.Threading.Tasks;
-    using PlayGames;
 
     [Serializable]
-    public class UnityPlayGamesAuthFactory: IAuthProviderFactory
+    public class FacebookAuthFactory: IAuthProviderFactory
     {
         public async UniTask<IGameAuthProvider> CreateAsync(string id,IContext context)
         {
-            return new UnityPlayGamesAuthProvider();
+            return new FacebookAuthProvider();
         }
     }
 }

@@ -1,0 +1,23 @@
+{
+    "name": "unigame.gameauth.facebook",
+    "rootNamespace": "",
+    "references": [
+        "GUID:18603e71c228c734cbe92355a957dbc2",
+        "GUID:18e001e7783f9fa4f91ffb0f7d0ecfc5",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:eec0964c48f6f4e40bc3ec2257ccf8c5",
+        "GUID:d471970753975834d8890bf4a0eef571",
+        "GUID:2ed7c5348d9801a40a9fd7480dd6b981"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FACEBOOK_GAMEAUTH_ENABLED"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

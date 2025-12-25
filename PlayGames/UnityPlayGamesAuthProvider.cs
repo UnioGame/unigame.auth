@@ -7,6 +7,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
     using FirebaseEmail;
     using UniCore.Runtime.ProfilerTools;
     using UnityEngine;
+    using Utils;
 
 #if UNITY_ANDROID && PLAY_GAMES_ENABLED
     using GooglePlayGames;
@@ -18,13 +19,12 @@ namespace UniGame.Runtime.GameAuth.PlayGames
     {
         public int LoginTimeoutSeconds = 30;
         
-        private readonly string _id;
         private AuthProviderResult _authResult = null;
+        private bool _tokenCompleted = false;
+        private SignInStatus _signInStatus = SignInStatus.Canceled;
         
-        public UnityPlayGamesAuthProvider(string id)
+        public UnityPlayGamesAuthProvider()
         {
-            _id = id;
-            
 #if UNITY_ANDROID && PLAY_GAMES_ENABLED
             //Настройка Play Games
             PlayGamesPlatform.Activate();
@@ -51,9 +51,9 @@ namespace UniGame.Runtime.GameAuth.PlayGames
             return await LoginAsync(context, cancellationToken);
         }
 
-        public UniTask<SignOutResult> SignOutAsync()
+        public UniTask<AuthSignOutResult> SignOutAsync()
         {
-            return UniTask.FromResult(new SignOutResult(){success = true, error = string.Empty});
+            return UniTask.FromResult(new AuthSignOutResult(){success = true, error = string.Empty});
         }
         
         public UniTask<AuthProviderResult> RegisterAsync(IAuthContext context)
@@ -104,9 +104,18 @@ namespace UniGame.Runtime.GameAuth.PlayGames
 #endif
             
 #if UNITY_ANDROID && PLAY_GAMES_ENABLED
+            
+            PlayGamesPlatform.Activate();
+            var token = string.Empty;
+            
+            _signInStatus = SignInStatus.Canceled;
+            _tokenCompleted = false;
+            
             //Настройка Play Games
-            PlayGamesPlatform.Instance.Authenticate(async x =>
+            PlayGamesPlatform.Instance.Authenticate(x =>
             {
+                _signInStatus = x;
+                
                 Debug.Log($"PlayGamesPlatform Status : {x}");
                 
                 if (x != SignInStatus.Success)
@@ -114,46 +123,44 @@ namespace UniGame.Runtime.GameAuth.PlayGames
                     _authResult = new AuthProviderResult()
                     {
                         success = false,
-                        error = x.ToString(),
+                        error = x.ToStringFromCache(),
                     };
                     
                     Debug.Log($"PlayGamesPlatform Login Failed");
                     return;
                 }
-
-                var token = string.Empty;
-                var tokenCompleted = false;
                 
                 PlayGamesPlatform.Instance.RequestServerSideAccess(true, code =>
                 {
                     Debug.Log("Authorization code: " + code);
                     token = code; // This token serves as an example to be used for SignInWithGooglePlayGames
-                    tokenCompleted = true;
+                    _tokenCompleted = true;
                 });
 
-                await UniTask.WaitWhile(() => tokenCompleted == false)
-                    .Timeout(TimeSpan.FromSeconds(LoginTimeoutSeconds));
-                
-                var user = PlayGamesPlatform.Instance.localUser;
-                var id = PlayGamesPlatform.Instance.GetUserId();
-                var success = user is { authenticated: true };
-                
-                Debug.Log($"PlayGamesPlatform : {user?.userName} |  Auth: {success} | ID : {id}");
-
-                _authResult = new AuthProviderResult()
-                {
-                    success = success,
-                    data = new GameAuthData()
-                    {
-                        userId = id,
-                        displayName = PlayGamesPlatform.Instance.GetUserDisplayName(),
-                        photoUrl = PlayGamesPlatform.Instance.GetUserImageUrl(),
-                        email = string.Empty,
-                        token = token,
-                    },
-                    error = x.ToString(),
-                };
             });
+            
+            await UniTask.WaitWhile(this,x => x._tokenCompleted == false,cancellationToken:cancellationToken)
+                .Timeout(TimeSpan.FromSeconds(LoginTimeoutSeconds));
+                
+            var user = PlayGamesPlatform.Instance.localUser;
+            var id = PlayGamesPlatform.Instance.GetUserId();
+            var success = user is { authenticated: true };
+                
+            Debug.Log($"PlayGamesPlatform : {user?.userName} |  Auth: {success} | ID : {id}");
+
+            _authResult = new AuthProviderResult()
+            {
+                success = success,
+                data = new GameAuthData()
+                {
+                    userId = id,
+                    displayName = PlayGamesPlatform.Instance.GetUserDisplayName(),
+                    photoUrl = PlayGamesPlatform.Instance.GetUserImageUrl(),
+                    email = string.Empty,
+                    token = token,
+                },
+                error = _signInStatus.ToStringFromCache()
+            };
 
             await UniTask.WaitWhile(this,
                     static x => x._authResult == null,cancellationToken:cancellationToken)
