@@ -2,33 +2,36 @@ namespace UniGame.Runtime.GameAuth.PlayGames
 {
     using System;
     using System.Threading;
-    using System.Threading.Tasks;
     using Cysharp.Threading.Tasks;
-    using FirebaseEmail;
     using UniCore.Runtime.ProfilerTools;
-    using UnityEngine;
     using Utils;
 
 #if UNITY_ANDROID && PLAY_GAMES_ENABLED
     using GooglePlayGames;
     using GooglePlayGames.BasicApi;
+    using UnityEngine;
 #endif
     
     [Serializable]
-    public class UnityPlayGamesAuthProvider: IGameAuthProvider
+    public class PlayGamesAuthProvider: IGameAuthProvider
     {
         public int LoginTimeoutSeconds = 30;
         
         private AuthProviderResult _authResult = null;
         private bool _tokenCompleted = false;
-        private SignInStatus _signInStatus = SignInStatus.Canceled;
-        
-        public UnityPlayGamesAuthProvider()
-        {
+        private bool _isActivated = false;
+        private string _token = string.Empty;
+
 #if UNITY_ANDROID && PLAY_GAMES_ENABLED
-            //Настройка Play Games
-            PlayGamesPlatform.Activate();
+        private SignInStatus _signInStatus = SignInStatus.Canceled;
 #endif
+
+        public PlayGamesAuthProvider()
+        {
+// #if UNITY_ANDROID && PLAY_GAMES_ENABLED
+//             //Настройка Play Games
+//             PlayGamesPlatform.Activate();
+// #endif
         }
 
         public bool AllowRestoreAccount => true;
@@ -68,8 +71,9 @@ namespace UniGame.Runtime.GameAuth.PlayGames
 
         public bool CheckAuthContext(IAuthContext context)
         {
-            return context is UnityPlayGamesAuthContext;
+            return context is PlayGamesAuthContext;
         }
+
 
         public async UniTask<AuthProviderResult> LoginAsync(IAuthContext context,CancellationToken cancellationToken = default)
         {
@@ -89,13 +93,57 @@ namespace UniGame.Runtime.GameAuth.PlayGames
                 };
             }
         }
+
+        
+        public void Activate()
+        {
+#if UNITY_ANDROID && PLAY_GAMES_ENABLED
+
+            if (_isActivated) return;
+
+            PlayGamesPlatform.Activate();
+            
+            _isActivated = true;
+#endif
+        }
+
+#if UNITY_ANDROID && PLAY_GAMES_ENABLED
+        
+        public void ApplyAuthStatus(SignInStatus x)
+        {
+            _signInStatus = x;
+                
+            Debug.Log($"PlayGamesPlatform Status : {x}");
+                
+            if (x != SignInStatus.Success)
+            {
+                _authResult = new AuthProviderResult()
+                {
+                    success = false,
+                    error = x.ToStringFromCache(),
+                };
+                    
+                Debug.Log($"PlayGamesPlatform Login Failed");
+                
+                _tokenCompleted = true;
+                return;
+            }
+                
+            PlayGamesPlatform.Instance.RequestServerSideAccess(true, code =>
+            {
+                Debug.Log("Authorization code: " + code);
+                _token = code; // This token serves as an example to be used for SignInWithGooglePlayGames
+                _tokenCompleted = true;
+            });
+
+        }
+#endif
         
         public async UniTask<AuthProviderResult> LoginByPlayServiceAsync(CancellationToken cancellationToken = default)
         {
             _authResult = null;
             
 #if !UNITY_ANDROID
-
             return new AuthProviderResult()
             {
                 success = false,
@@ -104,79 +152,40 @@ namespace UniGame.Runtime.GameAuth.PlayGames
 #endif
             
 #if UNITY_ANDROID && PLAY_GAMES_ENABLED
+
+            Activate();
             
-            PlayGamesPlatform.Activate();
-            var token = string.Empty;
-            
+            _token = string.Empty;
             _signInStatus = SignInStatus.Canceled;
             _tokenCompleted = false;
             
-            //Настройка Play Games
-            PlayGamesPlatform.Instance.Authenticate(x =>
-            {
-                _signInStatus = x;
-                
-                Debug.Log($"PlayGamesPlatform Status : {x}");
-                
-                if (x != SignInStatus.Success)
-                {
-                    _authResult = new AuthProviderResult()
-                    {
-                        success = false,
-                        error = x.ToStringFromCache(),
-                    };
-                    
-                    Debug.Log($"PlayGamesPlatform Login Failed");
-                    return;
-                }
-                
-                PlayGamesPlatform.Instance.RequestServerSideAccess(true, code =>
-                {
-                    Debug.Log("Authorization code: " + code);
-                    token = code; // This token serves as an example to be used for SignInWithGooglePlayGames
-                    _tokenCompleted = true;
-                });
-
-            });
+            PlayGamesPlatform.Instance.Authenticate(ApplyAuthStatus);
             
             await UniTask.WaitWhile(this,x => x._tokenCompleted == false,cancellationToken:cancellationToken)
                 .Timeout(TimeSpan.FromSeconds(LoginTimeoutSeconds));
                 
             var user = PlayGamesPlatform.Instance.localUser;
-            var id = PlayGamesPlatform.Instance.GetUserId();
-            var success = user is { authenticated: true };
+            var success = _signInStatus == SignInStatus.Success;
                 
-            Debug.Log($"PlayGamesPlatform : {user?.userName} |  Auth: {success} | ID : {id}");
+            Debug.Log($"PlayGamesPlatform : {user?.userName} |  Auth: {success} | ID : {user?.id}");
 
             _authResult = new AuthProviderResult()
             {
                 success = success,
                 data = new GameAuthData()
                 {
-                    userId = id,
+                    userId = PlayGamesPlatform.Instance.GetUserId(),
                     displayName = PlayGamesPlatform.Instance.GetUserDisplayName(),
                     photoUrl = PlayGamesPlatform.Instance.GetUserImageUrl(),
                     email = string.Empty,
-                    token = token,
+                    token = _token,
                 },
                 error = _signInStatus.ToStringFromCache()
             };
-
-            await UniTask.WaitWhile(this,
-                    static x => x._authResult == null,cancellationToken:cancellationToken)
-                .TimeoutWithoutException(TimeSpan.FromSeconds(LoginTimeoutSeconds));
-
+            
             await UniTask.SwitchToMainThread();
             
-            if (_authResult != null) return _authResult;
-            
-            Debug.Log($"PlayGamesPlatform : Login Timeout");
-            
-            return new AuthProviderResult()
-            {
-                success = false,
-                error = "PlayGamesPlatform Login Timeout",
-            };
+            return _authResult;
 #endif
 
             return new AuthProviderResult()

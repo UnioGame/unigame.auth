@@ -11,14 +11,14 @@
     {
         private bool _isAuthenticated;
         
-        private UnityPlayGamesAuthProvider _playGamesAuthProvider;
+        private PlayGamesAuthProvider _playGamesAuthProvider;
         private NakamaPlayServicesAuthContract _nakamaGoogleAuthContract;
         private NakamaLogoutContract _nakamaLogoutContract;
         private NakamaRestoreSessionContract _nakamaRestoreSessionContract;
 
         public NakamaPlayServicesAuthProvider(string id)
         {
-            _playGamesAuthProvider = new UnityPlayGamesAuthProvider();
+            _playGamesAuthProvider = new PlayGamesAuthProvider();
             _nakamaGoogleAuthContract = new NakamaPlayServicesAuthContract();
             _nakamaLogoutContract = new NakamaLogoutContract();
             _nakamaRestoreSessionContract = new NakamaRestoreSessionContract();

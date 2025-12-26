@@ -6,11 +6,11 @@ namespace UniGame.Runtime.GameAuth.FirebaseEmail
     using PlayGames;
 
     [Serializable]
-    public class UnityPlayGamesAuthFactory: IAuthProviderFactory
+    public class PlayGamesAuthFactory: IAuthProviderFactory
     {
         public async UniTask<IGameAuthProvider> CreateAsync(string id,IContext context)
         {
-            return new UnityPlayGamesAuthProvider();
+            return new PlayGamesAuthProvider();
         }
     }
 }
