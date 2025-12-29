@@ -12,9 +12,6 @@ namespace UniGame.Runtime.GameAuth
     [Serializable]
     public class GameAuthConfiguration
     {
-        [Tooltip("if true, the auth service will use the device id to identify the user")]
-        public bool debugMode = false;
-
         [Tooltip("If true, the auth service will cache user login data in local storage")]
         public bool userLoginCache = true;
         

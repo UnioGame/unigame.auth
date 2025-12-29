@@ -26,6 +26,7 @@ namespace UniGame.Runtime.GameAuth
         public UniGameAuthService(GameAuthConfiguration configuration)
         {
             _configuration = configuration;
+            
             _authStatus.Value = new GameAuthResult()
             {
                 success = false,
@@ -33,11 +34,6 @@ namespace UniGame.Runtime.GameAuth
                 id = string.Empty,
                 data = null,
             };
-
-            if (_configuration.userLoginCache)
-            {
-                RestoreAuthAsync().Forget();
-            }
         }
 
         public Observable<GameAuthResult> AuthAction => _authAction;
