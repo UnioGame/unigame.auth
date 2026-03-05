@@ -141,8 +141,6 @@ namespace UniGame.Runtime.GameAuth.PlayGames
         
         public async UniTask<AuthProviderResult> LoginByPlayServiceAsync(CancellationToken cancellationToken = default)
         {
-            _authResult = null;
-            
 #if !UNITY_ANDROID
             return new AuthProviderResult()
             {
@@ -151,40 +149,60 @@ namespace UniGame.Runtime.GameAuth.PlayGames
             };
 #endif
             
-#if UNITY_ANDROID && PLAY_GAMES_ENABLED
-
-            Activate();
+            _authResult = null;
             
-            _token = string.Empty;
-            _signInStatus = SignInStatus.Canceled;
-            _tokenCompleted = false;
+            GameLog.Log($"[PlayGamesAuth] Start auth Play Service", Color.yellow);
             
-            PlayGamesPlatform.Instance.Authenticate(ApplyAuthStatus);
-            
-            await UniTask.WaitWhile(this,x => x._tokenCompleted == false,cancellationToken:cancellationToken)
-                .Timeout(TimeSpan.FromSeconds(LoginTimeoutSeconds));
-                
-            var user = PlayGamesPlatform.Instance.localUser;
-            var success = _signInStatus == SignInStatus.Success;
-                
-            Debug.Log($"PlayGamesPlatform : {user?.userName} |  Auth: {success} | ID : {user?.id}");
+#if PLAY_GAMES_ENABLED
 
             _authResult = new AuthProviderResult()
             {
-                success = success,
-                data = new GameAuthData()
-                {
-                    userId = PlayGamesPlatform.Instance.GetUserId(),
-                    displayName = PlayGamesPlatform.Instance.GetUserDisplayName(),
-                    photoUrl = PlayGamesPlatform.Instance.GetUserImageUrl(),
-                    email = string.Empty,
-                    token = _token,
-                },
-                error = _signInStatus.ToStringFromCache()
+                success = false
             };
             
             await UniTask.SwitchToMainThread();
+
+            var signInStatus = new UniTaskCompletionSource<SignInStatus>();
+            PlayGamesPlatform.Instance.Authenticate(status => signInStatus.TrySetResult(status));
             
+            var signInResult = await signInStatus.Task.AttachExternalCancellation(cancellationToken);
+
+            if (signInResult != SignInStatus.Success)
+            {
+                GameLog.Log($"[PlayGamesAuth] Authentication Failed. Try to do it manually.", Color.yellow);
+                var manualTcs = new UniTaskCompletionSource<SignInStatus>();
+                PlayGamesPlatform.Instance.ManuallyAuthenticate(status => manualTcs.TrySetResult(status));
+                signInResult = await manualTcs.Task.AttachExternalCancellation(cancellationToken);
+            }
+            
+            if (signInResult != SignInStatus.Success)
+            {
+                GameLog.Log($"[PlayGamesAuth] Manually authentication Failed.", Color.yellow);
+                var messageError = $"Error code: {signInResult}.";
+                _authResult.error = messageError;
+                return _authResult;
+            }
+
+            GameLog.Log($"[PlayGamesAuth] Authentication done.", Color.green);
+            var authCode = new UniTaskCompletionSource<string>();
+            PlayGamesPlatform.Instance.RequestServerSideAccess(false, x => authCode.TrySetResult(x));
+            
+            var authCodeResult = await authCode.Task.AttachExternalCancellation(cancellationToken);
+
+            if (string.IsNullOrEmpty(authCodeResult))
+            {
+                var messageError = "Empty server side auth code";
+                Debug.LogError($"[PlayGamesAuth] {messageError}");
+                _authResult.error = messageError;
+                return _authResult;
+            }
+
+            _authResult.success = true;
+            _authResult.data.userId = PlayGamesPlatform.Instance.GetUserId();
+            _authResult.data.displayName = PlayGamesPlatform.Instance.GetUserDisplayName();
+            _authResult.data.photoUrl = PlayGamesPlatform.Instance.GetUserImageUrl();
+            _authResult.data.token = authCodeResult;
+
             return _authResult;
 #endif
 
