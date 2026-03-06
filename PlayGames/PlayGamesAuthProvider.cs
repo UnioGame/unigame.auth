@@ -4,6 +4,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
     using System.Threading;
     using Cysharp.Threading.Tasks;
     using UniCore.Runtime.ProfilerTools;
+    using UnityEngine;
     using Utils;
 
 #if UNITY_ANDROID && PLAY_GAMES_ENABLED
