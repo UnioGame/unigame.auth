@@ -21,7 +21,7 @@
 
         public bool AllowRegisterAccount => true;
 
-        public bool AllowRestoreAccount => throw new NotImplementedException();
+        public bool AllowRestoreAccount => true;
 
         public bool CheckAuthContext(IAuthContext context)
         {
