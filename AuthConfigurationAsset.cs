@@ -12,7 +12,7 @@ namespace UniGame.Runtime.GameAuth
 #endif
     
     [CreateAssetMenu(menuName = "UniGame/AuthService/Auth Configuration", fileName = "GameAuthConfig")]
-    public class UniGameAuthConfigurationAsset : ScriptableObject
+    public class AuthConfigurationAsset : ScriptableObject
     {
 
 #if ODIN_INSPECTOR
@@ -24,7 +24,7 @@ namespace UniGame.Runtime.GameAuth
         public static IEnumerable<string> AuthProviders()
         {
 #if UNITY_EDITOR
-            var configuration = AssetEditorTools.GetAsset<UniGameAuthConfigurationAsset>();
+            var configuration = AssetEditorTools.GetAsset<AuthConfigurationAsset>();
 
             foreach (var configurationLoginProvider in configuration.configuration.loginProviders)
             {
