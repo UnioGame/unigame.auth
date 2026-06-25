@@ -5,6 +5,6 @@
     [Serializable]
     public class PlayGamesAuthContext : IAuthContext
     {
-        
+        public bool interactiveAllowed = true;
     }
 }

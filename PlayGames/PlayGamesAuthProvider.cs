@@ -80,7 +80,9 @@ namespace UniGame.Runtime.GameAuth.PlayGames
         {
             try
             {
-                var result = await LoginByPlayServiceAsync(cancellationToken);
+                var interactiveAllowed = context is not PlayGamesAuthContext playGamesContext ||
+                    playGamesContext.interactiveAllowed;
+                var result = await LoginByPlayServiceAsync(interactiveAllowed, cancellationToken);
                 return result;
             }
             catch (Exception e)
@@ -142,6 +144,13 @@ namespace UniGame.Runtime.GameAuth.PlayGames
         
         public async UniTask<AuthProviderResult> LoginByPlayServiceAsync(CancellationToken cancellationToken = default)
         {
+            return await LoginByPlayServiceAsync(true, cancellationToken);
+        }
+
+        public async UniTask<AuthProviderResult> LoginByPlayServiceAsync(
+            bool interactiveAllowed,
+            CancellationToken cancellationToken = default)
+        {
 #if !UNITY_ANDROID
             return new AuthProviderResult()
             {
@@ -155,6 +164,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
             GameLog.Log($"[PlayGamesAuth] Start auth Play Service", Color.yellow);
             
 #if PLAY_GAMES_ENABLED
+            Activate();
 
             _authResult = new AuthProviderResult()
             {
@@ -168,7 +178,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
             
             var signInResult = await signInStatus.Task.AttachExternalCancellation(cancellationToken);
 
-            if (signInResult != SignInStatus.Success)
+            if (signInResult != SignInStatus.Success && interactiveAllowed)
             {
                 GameLog.Log($"[PlayGamesAuth] Authentication Failed. Try to do it manually.", Color.yellow);
                 var manualTcs = new UniTaskCompletionSource<SignInStatus>();
