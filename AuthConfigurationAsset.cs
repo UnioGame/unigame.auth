@@ -11,7 +11,7 @@ namespace UniGame.Runtime.GameAuth
     using Sirenix.OdinInspector;
 #endif
     
-    [CreateAssetMenu(menuName = "UniGame/AuthService/Auth Configuration", fileName = "GameAuthConfig")]
+    [CreateAssetMenu(menuName = "UniGame/AuthService/AuthConfigurationAsset", fileName = "AuthConfigurationAsset")]
     public class AuthConfigurationAsset : ScriptableObject
     {
 

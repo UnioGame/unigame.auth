@@ -16,7 +16,7 @@ namespace UniGame.Runtime.GameAuth.PlayGames
     [Serializable]
     public class PlayGamesAuthProvider: IGameAuthProvider
     {
-        public int LoginTimeoutSeconds = 30;
+        public int LoginTimeoutSeconds = 10;
         
         private AuthProviderResult _authResult = null;
         private bool _tokenCompleted = false;

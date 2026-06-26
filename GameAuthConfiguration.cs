@@ -15,7 +15,7 @@ namespace UniGame.Runtime.GameAuth
         [Tooltip("If true, the auth service will cache user login data in local storage")]
         public bool userLoginCache = true;
         
-        public float authTimeout = 30f;
+        public float authTimeout = 10f;
         
 #if ODIN_INSPECTOR
         [ListDrawerSettings(ListElementLabelName = "@providerName")]
