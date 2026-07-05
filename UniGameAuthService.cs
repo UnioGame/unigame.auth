@@ -116,7 +116,7 @@ namespace UniGame.Runtime.GameAuth
             
             if (result.success == false)
             {
-                GameLog.LogError($"login to : {result.id} | {result.error}");
+                GameLog.LogRuntime($"login to : {result.id} | {result.error}",Color.red);
             }
             
             _authAction.OnNext(result);
