@@ -26,6 +26,15 @@ namespace UniGame.Runtime.GameAuth
         UniTask<GameAuthResult> SignInAsync(IAuthContext loginContext, CancellationToken ct = default);
         
         UniTask<GameAuthResult> SignInAsync(string id,IAuthContext loginContext,CancellationToken ct = default);
+
+        /// <summary>
+        /// Requests a credential without publishing or persisting it as the active
+        /// local authorization state.
+        /// </summary>
+        UniTask<GameAuthResult> SignInTransientAsync(
+            string id,
+            IAuthContext loginContext,
+            CancellationToken ct = default);
         
         UniTask<ResetCredentialResult> ResetCredentialAsync(string id,IAuthContext loginContext);
         

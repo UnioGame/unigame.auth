@@ -96,6 +96,14 @@ namespace UniGame.Runtime.GameAuth
             return _authResult;
         }
 
+        public UniTask<GameAuthResult> SignInTransientAsync(
+            string id,
+            IAuthContext loginContext,
+            CancellationToken cancellationToken = default)
+        {
+            return UniTask.FromResult(_authResult);
+        }
+
         public async UniTask<ResetCredentialResult> ResetCredentialAsync(string id, IAuthContext loginContext)
         {
             return new ResetCredentialResult()
